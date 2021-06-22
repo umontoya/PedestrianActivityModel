@@ -72,17 +72,17 @@ st_write(Pietons_vec_sF, "pietons_dens_vec.geojson",delete_dsn = T)
 mailles_densiy_vec_sf <- st_transform(mailles_densiy_vec_sf, 2154)
 
 #cellules dans zone marchable
-xx <- st_intersection(zonepieton, mailles_densiy_vec_sf)
-st_write(xx, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/ZonesMarchables.shp",layer = "ZonesMarchables")
+ZonesMarchables <- st_intersection(zonepieton, mailles_densiy_vec_sf)
+st_write(ZonesMarchables, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/ZonesMarchables.shp",layer = "ZonesMarchables")
 
-ZonesMarchables <- xx
+
 
 # affectation du nombre de pi?tons par cellules
 MAX_PIETONS <- 10
-xx$nb_pietons <-  (xx$layer - min(xx$layer)) / (max(xx$layer)- min(xx$layer))
-xx$nb_pietons <- xx$nb_pietons * MAX_PIETONS
-xx$nb_pietons <- round(xx$nb_pietons)
-plot(xx["nb_pietons"])
+ZonesMarchables$nb_pietons <-  (ZonesMarchables$layer - min(ZonesMarchables$layer)) / (max(ZonesMarchables$layer)- min(ZonesMarchables$layer))
+ZonesMarchables$nb_pietons <- ZonesMarchables$nb_pietons * MAX_PIETONS
+ZonesMarchables$nb_pietons <- round(ZonesMarchables$nb_pietons)
+plot(ZonesMarchables["nb_pietons"])
 
 ######################################
 # ECHANTILLONAGE SPATIAL DES POINTS
@@ -93,7 +93,7 @@ plot(xx["nb_pietons"])
 # il n'est pas r?aliste de mettre  1 personne dans moins d'un  m?tres carr? !
 # ? discuter entre nous
 # filtrage des mailles de moins d'un m?tre carr?
-cells_to_fill <- xx[as.numeric(st_area(xx))  > 1,]
+cells_to_fill <- ZonesMarchables[as.numeric(st_area(ZonesMarchables))  > 1,]
 # pas la peine de remplir les mailles avec une densit? nulle
 cells_to_fill <- cells_to_fill[cells_to_fill$nb_pietons > 0 ,]
 plot(cells_to_fill["nb_pietons"])
@@ -136,18 +136,25 @@ sourcesPietons$dens_restaurants <-  dens_restaurants
 #Trosieme fa?on
 #Left join
 ##
+
 sourcespietons_alt <- ZonesMarchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
-# Convert to data tables
 
 plot(sourcespietons_alt[, "nb_pietons"])
 
-
+BDD_Info <-  read.csv("./../../BDD_Info.csv", sep = ";")
 dt1 <- data.table(BDD_Info) 
 dt2 <- data.table(sourcespietons_alt)
 #left join random
 BDD_Info$nb_pietons <-BDD_Info$Nb.Pers
+names(BDD_Info) <-  c("ID", "Origine", "Homme", "Femme" , "nb_pietons", "Enfants", "Sensation", "Ext.Int" , "Audio" , "Langue")
 # dt3 <- dt1[dt2, on = .(nb_pietons),
 #     {ri <- sample(.N, 1L)
 #     .(Homme = Homme[ri], ID = ID[ri] )},by = .EACHI]
 T4 <- dt2[, c("ID") := dt1[sample(.N)][.SD, on=.(nb_pietons), mult="first", .(x.ID)]]
 st_write(T4, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/T4.shp",layer = "T4") #Export T4
+
+
+
+
+
+
