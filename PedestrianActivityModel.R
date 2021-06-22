@@ -136,9 +136,12 @@ sourcesPietons$dens_restaurants <-  dens_restaurants
 #Trosieme fa?on
 #Left join
 ##
-sourcespietons_alt <- zones_Marchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
+sourcespietons_alt <- ZonesMarchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
 # Convert to data tables
-sourcespietons_alt  cells_to_fill$nb_pietons
+sourcespietons_alt  <- ZonesMarchables$nb_pietons
+
+
+
 
 
 
