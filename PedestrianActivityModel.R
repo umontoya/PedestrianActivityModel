@@ -8,7 +8,7 @@ library(dplyr)
 library(data.table)
 
 
-# fonction trouvée sur internet pour estimer la densité
+# fonction trouv?e sur internet pour estimer la densit?
 st_kde <- function(points,cellsize, bandwith, extent = NULL){
   require(MASS)
   require(raster)
@@ -35,22 +35,22 @@ tramway <- st_read("TRAMWAY.shp")
 zonepieton <- st_read("ZPB_EXPLODE2.shp")
 extent_zone <- st_bbox(zonepieton)[c(1,3,2,4)]
 
-#estimation des densités
+#estimation des densit?s
 boutiques_dens <- st_kde(boutiques,20,400,extent = extent_zone)
 restaurants_dens <- st_kde(restaurants,20,400,extent = extent_zone)
 tramway_dens <- st_kde(tramway,20,400,extent = extent_zone)
 
-#on donne les attributs de projection aux raster de densité crées
+#on donne les attributs de projection aux raster de densit? cr?es
 projection(boutiques_dens) <- projection(boutiques)
 projection(tramway_dens) <- projection(tramway)
 projection(restaurants_dens) <-  projection(restaurants)
 
-#Coeffs du travail de Léo
+#Coeffs du travail de L?o
 coeff_boutiques <-  5593
 coeff_resto <-  3042
 coeff_tram <-  36922
 
-# on aligne les raster si jamais leur origine sont différentes
+# on aligne les raster si jamais leur origine sont diff?rentes
 template<- projectRaster(to = restaurants_dens, from= boutiques_dens, alignOnly=TRUE)
 
 #template is an empty raster that has the projected extent of r2 but is aligned with r1 (i.e. same resolution, origin, and crs of r1)
@@ -60,7 +60,7 @@ tram_aligned <-  projectRaster(from=tramway_dens, to=template)
 # mosaic fait la somme des rasters
 merged_rasters<- mosaic(coeff_boutiques*boutiques_dens,coeff_resto*resto_aligned, coeff_tram*tram_aligned, fun=sum, na.rm=TRUE)
 
-# vectorisation du raster mergé
+# vectorisation du raster merg?
 mailles_densiy_vec_sf <-  rasterToPolygons(merged_rasters, dissolve = F)
 mailles_densiy_vec_sf <- st_as_sf(mailles_densiy_vec_sf)
 
@@ -75,7 +75,9 @@ mailles_densiy_vec_sf <- st_transform(mailles_densiy_vec_sf, 2154)
 xx <- st_intersection(zonepieton, mailles_densiy_vec_sf)
 st_write(xx, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/ZonesMarchables.shp",layer = "ZonesMarchables")
 
-# affectation du nombre de piétons par cellules
+ZonesMarchables <- xx
+
+# affectation du nombre de pi?tons par cellules
 MAX_PIETONS <- 10
 xx$nb_pietons <-  (xx$layer - min(xx$layer)) / (max(xx$layer)- min(xx$layer))
 xx$nb_pietons <- xx$nb_pietons * MAX_PIETONS
@@ -84,22 +86,22 @@ plot(xx["nb_pietons"])
 
 ######################################
 # ECHANTILLONAGE SPATIAL DES POINTS
-# Première façon avec une boucle
+# PremiÃ¨re faÃ§on avec une boucle
 ######################################
 
 # filtrer les mailles trop petites
-# il n'est pas réaliste de mettre  1 personne dans moins d'un  mètres carré !
-# À discuter entre nous
-# filtrage des mailles de moins d'un mètre carré
+# il n'est pas r?aliste de mettre  1 personne dans moins d'un  m?tres carr? !
+# ? discuter entre nous
+# filtrage des mailles de moins d'un m?tre carr?
 cells_to_fill <- xx[as.numeric(st_area(xx))  > 1,]
-# pas la peine de remplir les mailles avec une densité nulle
+# pas la peine de remplir les mailles avec une densit? nulle
 cells_to_fill <- cells_to_fill[cells_to_fill$nb_pietons > 0 ,]
 plot(cells_to_fill["nb_pietons"])
 sourcesPietons <-  list()
 for (i in 1:nrow(cells_to_fill)){
   c <-cells_to_fill$geometry[i]
   n <- cells_to_fill$nb_pietons[i]
-  cat("maille", i,": ", n, "points dans" , st_area(c), "m²\n")
+  cat("maille", i,": ", n, "points dans" , st_area(c), "m?\n")
   pts <- st_sample(c,n, type="regular") %>% st_sf()
   if(nrow(pts)>0){
     sourcesPietons[[i]] <- pts
@@ -107,7 +109,7 @@ for (i in 1:nrow(cells_to_fill)){
 }
 yy <- rbindlist(sourcesPietons)
 yy <- yy %>% st_sf()
-# attention le plot déconne , mais l'ouverture dans Qgis confirme que c'est localisé dans la zone marchable
+# attention le plot d?conne , mais l'ouverture dans Qgis confirme que c'est localis? dans la zone marchable
 st_write(yy, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/sourcesPietonsPaul2.shp",layer = "sourcespietons2")
 #affichage simple
 plot(cells_to_fill$geometry, lwd=0.1)
@@ -115,13 +117,13 @@ plot(yy, add=T, cex=0.1, col="orange")
 dev.off()
 
 #---------------------------------
-# Deuxième façon d'échantilloner les points
-#   (chez moi ça fonctionne ^^)
+# Deuxi?me fa?on d'?chantilloner les points
+#   (chez moi ?a fonctionne ^^)
 #----------------------------------------
 sourcesPietons <-  st_sample(cells_to_fill$geometry, size=cells_to_fill$nb_pietons, type="regular")
 st_write(sourcesPietons, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/sourcesPietonsPaul.shp",layer = "sourcespietons")
 library(raster)
-#intersection entre sources et rasters de densités
+#intersection entre sources et rasters de densit?s
 dens_boutiques <-  extract(boutiques_dens, sourcesPietons %>% as_Spatial())
 dens_tramway <-  extract(tramway_dens, sourcesPietons %>% as_Spatial())
 dens_restaurants <- extract(restaurants_dens, sourcesPietons %>% as_Spatial())
@@ -131,11 +133,15 @@ sourcesPietons$dens_traway <-  dens_tramway
 sourcesPietons$dens_restaurants <-  dens_restaurants
 
 ##
-#Trosieme façon
+#Trosieme fa?on
 #Left join
 ##
 sourcespietons_alt <- zones_Marchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
 # Convert to data tables
+sourcespietons_alt  cells_to_fill$nb_pietons
+
+
+
 dt1 <- data.table(BDD_Info) 
 dt2 <- data.table(sourcespietons_alt)
 #left join random
