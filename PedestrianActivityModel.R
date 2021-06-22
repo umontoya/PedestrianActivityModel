@@ -138,7 +138,7 @@ sourcesPietons$dens_restaurants <-  dens_restaurants
 ##
 sourcespietons_alt <- ZonesMarchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
 # Convert to data tables
-sourcespietons_alt  <- ZonesMarchables$nb_pietons
+sourcespietons_alt$nb_pietons  <- ZonesMarchables$nb_pietons
 
 
 
