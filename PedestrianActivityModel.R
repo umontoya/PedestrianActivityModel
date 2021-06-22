@@ -153,8 +153,34 @@ names(BDD_Info) <-  c("ID", "Origine", "Homme", "Femme" , "nb_pietons", "Enfants
 T4 <- dt2[, c("ID") := dt1[sample(.N)][.SD, on=.(nb_pietons), mult="first", .(x.ID)]]
 st_write(T4, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/T4.shp",layer = "T4") #Export T4
 
+# Ce qu'on veut obtenir avec T4 :
+# pour chaque entité de la table sourcepietons_alt, on a un nombre de piétons
+# dans BBD_info , on a des informations qui décrivent des fichiers audio correspondant à plusieurs nombre de personnes (ici des piétons) 
+
+# T4 doit donner à chaque entité de sourcespietons_alt un ID de fichier pris au hasard dans les fichiers audio de BDD info parmi les fichiers qui ont le bon nombre de piétons i.e. celui de nb_piétons
 
 
 Spectrum <-  read.csv("./../../Spectrums_500ms.csv", sep = ";")
 T4_with_Spectrum <-  inner_join(T4, Spectrum, by=c("ID"  ="ID_File"))
 
+
+#############################################
+# Code en cours, ne pas éxécuter 
+#
+# nombre de piétons pour lesquels on dispose d'un audio 
+nb_p_audio_dispos <-  BDD_Info$nb_pietons %>% unique()
+
+AudioChoser <- function(nbp){ 
+ifelse(nbp %in% nb_p_disponibles,
+       #si on trouve un fichier du bon nombre 
+       BDD_Info %>%  filter(nb_pietons==nbp) %>%   
+       ,
+       # sinon 
+       NA)
+}
+
+BDD_Info %>%  select(nb_pietons)
+
+# nombre de piétons aléatoire 
+nbp <- sourcespietons_alt$nb_pietons %>%  sample(1)
+AudioChoser(nbp)
