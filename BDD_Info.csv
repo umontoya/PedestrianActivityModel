@@ -1,0 +1,22 @@
+ID;Origine;Homme;Femme;Nb.Pers;Enfants;Sensation;Ext.Int;Audio;Langue
+0;BBC Sounds;50;50;100;Non;Tranquille;Int;100;NA
+1;FreeSound;1;1;2;Non;Tranquille;Int;2.2;Espagnol
+2;FreeSound;2;0;2;Oui;Tranquille;Int;2.3;Anglais
+3;BBC Sounds;10;10;20;Non;Tranquille;Int;20;Anglais
+4;Youtube;3;0;3;Non;Stress;Int;3.1;Anglais
+5;Youtube;2;1;3;Non;Tranquille;Int;3.2;Anglais
+6;Youtube;2;1;3;Non;Tranquille;Int;3.3;Anglais
+7;BBC Sounds;15;15;30;Non;Vibrant;Ext;30;Anglais
+8;Youtube;1;3;4;Non;Surprise;Int;4.1;Anglais
+9;BBC Sounds;20;20;40;Oui;Vibrant;Ext;40.1;NA
+10;BBC Sounds;20;20;40;Non;Enervée;Int;40.2;Anglais
+11;Youtube;4;1;5;Non;Surprise;Int;5.2;Anglais
+12;FreeSound;5;0;5;Non;Tranquille;Int;5;Anglais
+13;BBC Sounds;30;30;60;Non;Vibrant;Int;60;Anglais
+14;FreeSound;7;0;7;Non;Tranquille;Int;7;Anglais
+15;BBC Sounds;35;35;70;Non;Vibrant;Ext;70;Anglais
+16;BBC Sounds;NA;0;NA;Non;Vibrant;Ext;Arabic;Arabic
+17;BBC Sounds;0.5;0.5;NA;Non;Vibrant;Ext;Cheerful;Anglais
+18;FreeSound;0.5;0.5;NA;Non;Tranquille;Int;Conv1;Espagnol
+19;FreeSound;0.5;0.5;NA;Non;Vibrant;Int;Crowd;NA
+20;BBC Sounds;NA;0;NA;Non;Vibrant;Int;Italian;Italian
