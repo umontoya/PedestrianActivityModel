@@ -173,13 +173,11 @@ nb_p_audio_dispos <-  BDD_Info$nb_pietons %>% unique()
 AudioChoser <- function(nbp){ 
 ifelse(nbp %in% nb_p_disponibles,
        #si on trouve un fichier du bon nombre 
-       BDD_Info %>%  filter(nb_pietons==nbp) %>%   
+       BDD_Info %>%  filter(nb_pietons==nbp) %>% dplyr::select(ID) %>%  sample(1) %>%  unlist()
        ,
        # sinon 
        NA)
 }
-
-BDD_Info %>%  select(nb_pietons)
 
 # nombre de piétons aléatoire 
 nbp <- sourcespietons_alt$nb_pietons %>%  sample(1)
