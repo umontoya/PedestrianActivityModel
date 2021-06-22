@@ -31,7 +31,7 @@ st_kde <- function(points,cellsize, bandwith, extent = NULL){
 }
 
 
-setwd("~/LASSO/traitements_R/ExportsCalcDensite/")
+setwd("~/LASSO/PedestrianActivityModel/spatial_sample_sources_pietons/ExportsCalcDensite/")
 
 boutiques <- st_read("BOUTIQUES.shp")
 restaurants <- st_read("RESTAURANTS.shp")
