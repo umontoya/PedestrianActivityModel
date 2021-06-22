@@ -170,7 +170,7 @@ T4_with_Spectrum <-  inner_join(T4, Spectrum, by=c("ID"  ="ID_File"))
 # nombre de piétons pour lesquels on dispose d'un audio 
 nb_p_audio_dispos <-  BDD_Info$nb_pietons %>% unique()
 
-AudioChoser <- function(nbp){ 
+AudioChoser <- function(nbp, nb_p_disponibles){ 
 ifelse(nbp %in% nb_p_disponibles,
        #si on trouve un fichier du bon nombre 
        BDD_Info %>%  filter(nb_pietons==nbp) %>% dplyr::select(ID) %>%  sample(1) %>%  unlist()
@@ -180,5 +180,5 @@ ifelse(nbp %in% nb_p_disponibles,
 }
 
 # nombre de piétons aléatoire 
-nbp <- sourcespietons_alt$nb_pietons %>%  sample(1)
-AudioChoser(nbp)
+
+AudioChoser(nbp, nb_p_audio_dispos)
