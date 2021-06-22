@@ -155,6 +155,6 @@ st_write(T4, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDe
 
 
 
-
-
+Spectrum <-  read.csv("./../../Spectrums_500ms.csv", sep = ";")
+T4_with_Spectrum <-  inner_join(T4, Spectrum, by=c("ID"  ="ID_File"))
 
