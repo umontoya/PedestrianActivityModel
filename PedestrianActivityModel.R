@@ -7,6 +7,7 @@ library(rgdal)
 library(dplyr)
 library(data.table)
 
+
 # fonction trouvée sur internet pour estimer la densité
 st_kde <- function(points,cellsize, bandwith, extent = NULL){
   require(MASS)
@@ -64,7 +65,7 @@ mailles_densiy_vec_sf <-  rasterToPolygons(merged_rasters, dissolve = F)
 mailles_densiy_vec_sf <- st_as_sf(mailles_densiy_vec_sf)
 
 # sauvegarde en fichier si besoin
-#st_write(Pietons_vec_sF, "pietons_dens_vec.geojson",delete_dsn = T)
+st_write(Pietons_vec_sF, "pietons_dens_vec.geojson",delete_dsn = T)
 # reprojection lambert 93
 
 # A verifier , c'est sans doute faux
@@ -72,6 +73,7 @@ mailles_densiy_vec_sf <- st_transform(mailles_densiy_vec_sf, 2154)
 
 #cellules dans zone marchable
 xx <- st_intersection(zonepieton, mailles_densiy_vec_sf)
+st_write(xx, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/ZonesMarchables.shp",layer = "ZonesMarchables")
 
 # affectation du nombre de piétons par cellules
 MAX_PIETONS <- 10
@@ -127,3 +129,19 @@ dens_restaurants <- extract(restaurants_dens, sourcesPietons %>% as_Spatial())
 sourcesPietons$dens_boutiques <-  dens_boutiques
 sourcesPietons$dens_traway <-  dens_tramway
 sourcesPietons$dens_restaurants <-  dens_restaurants
+
+##
+#Trosieme façon
+#Left join
+##
+sourcespietons_alt <- zones_Marchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
+# Convert to data tables
+dt1 <- data.table(BDD_Info) 
+dt2 <- data.table(sourcespietons_alt)
+#left join random
+BDD_Info$nb_pietons <-BDD_Info$Nb.Pers
+# dt3 <- dt1[dt2, on = .(nb_pietons),
+#     {ri <- sample(.N, 1L)
+#     .(Homme = Homme[ri], ID = ID[ri] )},by = .EACHI]
+T4 <- dt2[, c("ID") := dt1[sample(.N)][.SD, on=.(nb_pietons), mult="first", .(x.ID)]]
+st_write(T4, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/T4.shp",layer = "T4") #Export T4
