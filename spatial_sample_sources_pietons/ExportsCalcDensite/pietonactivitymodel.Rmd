@@ -1,0 +1,137 @@
+---
+title: "Pieton Activity Model"
+author: "Jonathan Siliézar"
+date: "30/4/2021"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+On cherche à créer un modèle d'activité des piétons pour la ville de Nantes, notamment le centre ville (où on a un grand nombre des commerces, arrêts de tramway et alors piètons). On récupere des tables de boutiques, restaurants, tramway et une grid de piétons genérés sur WPS Builder Noise Modelling à partir des tables importés de GeoFabrik. 
+
+# Import librairies
+Le premier pas c'est d'importer les libraries qu'on va utiliser pour ce calcul:
+
+```{r lib}
+
+setwd("I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite")
+
+library(geojsonR)
+library(ggplot2)
+library(sf)
+library(leaflet)
+library(raster)
+library(rgdal)
+library(stars)
+
+st_kde <- function(points,cellsize, bandwith, extent = NULL){
+  require(MASS)
+  require(raster)
+  require(sf)
+  if(is.null(extent)){
+    extent_vec <- st_bbox(points)[c(1,3,2,4)]
+  } else{
+    extent_vec <- st_bbox(extent)[c(1,3,2,4)]
+  }
+  
+  n_y <- ceiling((extent_vec[4]-extent_vec[3])/cellsize)
+  n_x <- ceiling((extent_vec[2]-extent_vec[1])/cellsize)
+  
+  extent_vec[2] <- extent_vec[1]+(n_x*cellsize)-cellsize
+  extent_vec[4] <- extent_vec[3]+(n_y*cellsize)-cellsize
+  
+  coords <- st_coordinates(points)
+  matrix <- kde2d(coords[,1],coords[,2],h = bandwith,n = c(n_x,n_y),lims = extent_vec)
+  raster(matrix)
+}
+
+
+```
+# Importer les tables
+On importe les tables mentionnés ci-dessus à partir de lesquelles on produira notre carte de densité:
+
+```{r import}
+
+boutiques <- st_read("BOUTIQUES.shp")
+restaurants <- st_read("RESTAURANTS.shp")
+tramway <- st_read("TRAMWAY.shp")
+zonepieton <- st_read("ZPB_EXPLODE2.shp")
+
+```
+On peut le faire aussi en utilisant leaflet:
+
+```{r visu}
+boutiques84 <- st_transform(boutiques,4326)
+
+leaflet(boutiques84) %>% 
+  addTiles() %>%
+  addMarkers()
+
+restaurants84 <- st_transform(restaurants,4326)
+
+leaflet(restaurants84) %>% 
+  addTiles() %>%
+  addMarkers()
+
+tramway84 <- st_transform(tramway,4326)
+
+leaflet(tramway84) %>% 
+  addTiles() %>%
+  addMarkers()
+
+zonepieton84 <- st_transform(zonepieton,4326)
+
+leaflet(zonepieton84) %>% 
+  addTiles() %>%
+  addPolygons()
+
+
+```
+La table zPB_EXPLODE contient les zones marchables où on pourra placer nos points piétons.
+
+# Faire une carte de densité (points avec des valeurs dessus)
+
+## raster boutique/resto/tram sur la zone
+
+```{r}
+
+boutiques_dens <- st_kde(boutiques,20,300)
+restaurants_dens <- st_kde(restaurants,20,400)
+tramway_dens <- st_kde(tramway,20,400)
+
+plot(boutiques_dens)
+plot(restaurants_dens)
+plot(tramway_dens)
+
+
+#boutiques_dens <- rasterToContour(boutiques_dens)
+#boutiques_dens84 <- sf::st_transform(boutiques_dens,4326)
+
+#leaflet(boutiques_dens) %>% 
+  #addTiles() %>%
+  #addPolygons()
+
+```
+
+## Mettre de points sources sur la zone
+
+## Mettre les valeurs de la densité sur ces points
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#Repartir les points sources dans la zone ZPB de 25m
+#A partir de ces cartes et de la carte zone 
+#Indiquer/Ajouter pour chacun de ces points une valeur d'intensité d'activité = f(densité bars, densité resto, densité...)
