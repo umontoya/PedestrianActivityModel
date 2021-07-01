@@ -28,6 +28,9 @@ st_kde <- function(points,cellsize, bandwith, extent = NULL){
 }
 
 setwd("I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite")
+setwd("~/LASSO/PedestrianActivityModel/spatial_sample_sources_pietons/ExportsCalcDensite/")
+
+
 
 boutiques <- st_read("BOUTIQUES.shp")
 restaurants <- st_read("RESTAURANTS.shp")
@@ -73,7 +76,45 @@ mailles_densiy_vec_sf <- st_transform(mailles_densiy_vec_sf, 2154)
 
 #cellules dans zone marchable
 ZonesMarchables <- st_intersection(zonepieton, mailles_densiy_vec_sf)
-st_write(ZonesMarchables, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/ZonesMarchables.shp",layer = "ZonesMarchables")
+
+
+
+##################################################
+# Filtrage des cellules trop fines et trop petites
+###############################################"
+
+
+# Filtrage cellules trop petites 
+
+# on définit un objet en unités "metres carrés"  avec une valeur , ici 1 
+library(units)
+area_threshold <-  as_units(1,"m^2")
+
+ # on applique ce seuil avec un filtre 
+ZonesMarchables <- ZonesMarchables %>%  filter(st_area(.) > area_threshold) 
+
+
+#librairie lwgeom pour le calcul du perimetre
+library(lwgeom)
+# calcul de la compacité (non noramlisée)
+ZonesMarchables$compacity <-  st_area(ZonesMarchables)/st_perimeter(ZonesMarchables)
+
+#seuil
+compacity_threshold <-  as_units(0.2, "m")
+#affichage pour voir l'aspect des cellules 
+une_zone_fine <- ZonesMarchables %>%  filter(compacity < compacity_threshold) 
+plot(une_zone_fine[, "compacity"])
+
+#filtrage des cellules au dessu du seuil de compacité
+ZonesMarchables <-  ZonesMarchables %>%  filter(compacity > compacity_threshold)
+
+
+
+
+
+
+
+
 
 
 
@@ -90,9 +131,9 @@ plot(ZonesMarchables["nb_pietons"])
 ######################################
 
 # filtrer les mailles trop petites
-# il n'est pas r?aliste de mettre  1 personne dans moins d'un  m?tres carr? !
+# il n'est pas réaliste de mettre  1 personne dans moins d'un  mètres carré !
 # ? discuter entre nous
-# filtrage des mailles de moins d'un m?tre carr?
+# filtrage des mailles de moins d'un metre carré
 cells_to_fill <- ZonesMarchables[as.numeric(st_area(ZonesMarchables))  > 1,]
 # pas la peine de remplir les mailles avec une densit? nulle
 cells_to_fill <- cells_to_fill[cells_to_fill$nb_pietons > 0 ,]
@@ -117,8 +158,8 @@ plot(yy, add=T, cex=0.1, col="orange")
 dev.off()
 
 #---------------------------------
-# Deuxi?me fa?on d'?chantilloner les points
-#   (chez moi ?a fonctionne ^^)
+# Deuxième façon d'échantilloner les points
+#   (chez moi ça fonctionne ^^)
 #----------------------------------------
 sourcesPietons <-  st_sample(cells_to_fill$geometry, size=cells_to_fill$nb_pietons, type="regular")
 st_write(sourcesPietons, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/sourcesPietonsPaul.shp",layer = "sourcespietons")
@@ -138,9 +179,6 @@ sourcesPietons$dens_restaurants <-  dens_restaurants
 ##
 
 sourcespietons_alt <- ZonesMarchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
-
-plot(sourcespietons_alt[, "nb_pietons"])
-
 
 
 #############################################
