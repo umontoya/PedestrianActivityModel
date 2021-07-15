@@ -290,7 +290,7 @@ ifelse(source_nb_pers %in% nb_pers_disponibles,
        BDD_Info %>%  
          filter(Nb.Pers==source_nb_pers) %>% 
          dplyr::select(ID) %>%  
-         sample(1) %>%  
+         slice_sample(n=1) %>%  
          unlist()
        ,
        # sinon , on met rien  
@@ -299,6 +299,8 @@ ifelse(source_nb_pers %in% nb_pers_disponibles,
 
 
 # on applique avec un 'sapply'  la fonction AudioChooser aux nb.pietons de la couche des sourcesPietons (sourcespietons_alt)  pour créer un nouvel attribut : AudioFileID
-sourcespietons_alt$AudioFileID <-  sapply(sourcespietons_alt$nb_pietons, AudioChooser, nb_pers_disponibles, BDD_Info )
+ZonesMarchables$AudioFileID <-  sapply(ZonesMarchables$nb_pietons, AudioChooser, nb_pers_disponibles, BDD_Info )
 
+
+ZonesMarchables %>% as.data.frame() %>% filter(nb_pietons==3) %>%  pull(AudioFileID) 
 
