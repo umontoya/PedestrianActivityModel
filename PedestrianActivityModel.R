@@ -199,7 +199,8 @@ st_write(sourcesPietons, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/E
 
 
 
-
+# si on agrèeges les sources au centroid de la cellule 
+sourcesPietonsCentroides <-  st_centroid(cells_to_fill)
 
 
 library(raster)
