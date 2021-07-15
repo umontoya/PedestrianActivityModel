@@ -303,5 +303,6 @@ ifelse(source_nb_pers %in% nb_pers_disponibles,
 ZonesMarchables$AudioFileID <-  sapply(ZonesMarchables$nb_pietons, AudioChooser, nb_pers_disponibles, BDD_Info )
 
 
-ZonesMarchables %>% as.data.frame() %>% filter(nb_pietons==3) %>%  pull(AudioFileID) 
+# pour affecter aux points aggregés 
 
+sourcesPietonsCentroides$AudioFileID <-    sapply(sourcesPietonsCentroides$nb_pietons, AudioChooser, nb_pers_disponibles, BDD_Info )
