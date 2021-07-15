@@ -63,20 +63,22 @@ tram_aligned <-  projectRaster(from=tramway_dens, to=template)
 # mosaic fait la somme des rasters
 merged_rasters<- mosaic(coeff_boutiques*boutiques_dens,coeff_resto*resto_aligned, coeff_tram*tram_aligned, fun=sum, na.rm=TRUE)
 
-# vectorisation du raster merg?
-mailles_densiy_vec_sf <-  rasterToPolygons(merged_rasters, dissolve = F)
-mailles_densiy_vec_sf <- st_as_sf(mailles_densiy_vec_sf)
+# vectorisation du raster mergé
+mailles_density_vec_sf <-  rasterToPolygons(merged_rasters, dissolve = F)
+mailles_density_vec_sf <- st_as_sf(mailles_density_vec_sf)
 
 # sauvegarde en fichier si besoin
 #st_write(Pietons_vec_sF, "pietons_dens_vec.geojson",delete_dsn = T)
 # reprojection lambert 93
 
 # A verifier , c'est sans doute faux
-mailles_densiy_vec_sf <- st_transform(mailles_densiy_vec_sf, 2154)
+mailles_density_vec_sf <- st_transform(mailles_density_vec_sf, 2154)
 
 #cellules dans zone marchable
-ZonesMarchables <- st_intersection(zonepieton, mailles_densiy_vec_sf)
+ZonesMarchables <- st_intersection(zonepieton, mailles_density_vec_sf)
+names(ZonesMarchables) <-  c("EXPLOD_ID" ,"density",   "geometry")
 
+plot(ZonesMarchables[,"density"])
 
 
 ##################################################
@@ -105,25 +107,47 @@ compacity_threshold <-  as_units(0.2, "m")
 une_zone_fine <- ZonesMarchables %>%  filter(compacity < compacity_threshold) 
 plot(une_zone_fine[, "compacity"])
 
-#filtrage des cellules au dessu du seuil de compacité
+#filtrage des cellules au dessus du seuil de compacité
 ZonesMarchables <-  ZonesMarchables %>%  filter(compacity > compacity_threshold)
 
 
+plot(ZonesMarchables[,"density"])
+plot(ZonesMarchables[,"densityNormalized"])
 
 
 
+##################################################"
+# affectation du nombre de piétons par cellules
+##################################################"
 
 
+#: nombre maximal de piétons par cellule 
+# a ajuster à la amin en fonction de la taille d'une cellule , 
+#avec la ligne ci_dessous
+#st_area(ZonesMarchables) %>%  max
+
+MAX_PIETONS <- 100 
 
 
+ZonesMarchables$nb_pietons <- ZonesMarchables$density * st_area(ZonesMarchables)
 
 
-# affectation du nombre de pi?tons par cellules
-MAX_PIETONS <- 10
-ZonesMarchables$nb_pietons <-  (ZonesMarchables$layer - min(ZonesMarchables$layer)) / (max(ZonesMarchables$layer)- min(ZonesMarchables$layer))
-ZonesMarchables$nb_pietons <- ZonesMarchables$nb_pietons * MAX_PIETONS
-ZonesMarchables$nb_pietons <- round(ZonesMarchables$nb_pietons)
+# on renormalise entre 0 et 1  
+ZonesMarchables$nb_pietons <-  (ZonesMarchables$nb_pietons - min(ZonesMarchables$nb_pietons))/(max(ZonesMarchables$nb_pietons) -min(ZonesMarchables$nb_pietons))
+
+# on convertit en nombre entre 0 et MAX_PIETONS
+ZonesMarchables$nb_pietons <- ZonesMarchables$nb_pietons * MAX_PIETONS 
+
+ZonesMarchables$nb_pietons <- round(ZonesMarchables$nb_pietons) %>%  as.numeric()
 plot(ZonesMarchables["nb_pietons"])
+
+
+# pour vérifier visuellement que la densité n'a pas trop changé 
+#ZonesMarchables$densityrecacl <-  ZonesMarchables$nb_pietons / st_area(ZonesMarchables)
+#plot(ZonesMarchables["densityrecacl"])
+
+
+
 
 ######################################
 # ECHANTILLONAGE SPATIAL DES POINTS
@@ -134,7 +158,7 @@ plot(ZonesMarchables["nb_pietons"])
 # il n'est pas réaliste de mettre  1 personne dans moins d'un  mètres carré !
 # ? discuter entre nous
 # filtrage des mailles de moins d'un metre carré
-cells_to_fill <- ZonesMarchables[as.numeric(st_area(ZonesMarchables))  > 1,]
+cells_to_fill <- ZonesMarchables
 # pas la peine de remplir les mailles avec une densit? nulle
 cells_to_fill <- cells_to_fill[cells_to_fill$nb_pietons > 0 ,]
 plot(cells_to_fill["nb_pietons"])
@@ -142,19 +166,20 @@ sourcesPietons <-  list()
 for (i in 1:nrow(cells_to_fill)){
   c <-cells_to_fill$geometry[i]
   n <- cells_to_fill$nb_pietons[i]
-  cat("maille", i,": ", n, "points dans" , st_area(c), "m?\n")
+  cat("maille", i,": ", n, "points dans" , st_area(c), "m^2\n")
   pts <- st_sample(c,n, type="regular") %>% st_sf()
   if(nrow(pts)>0){
     sourcesPietons[[i]] <- pts
   }
 }
-yy <- rbindlist(sourcesPietons)
-yy <- yy %>% st_sf()
+sourcesPietons <- rbindlist(sourcesPietons)
+sourcesPietons <- sourcesPietons %>% st_sf()
+
 # attention le plot d?conne , mais l'ouverture dans Qgis confirme que c'est localis? dans la zone marchable
-st_write(yy, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/sourcesPietonsPaul2.shp",layer = "sourcespietons2")
+st_write(sourcesPietons, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/sourcesPietonsPaul2.shp",layer = "sourcespietons2")
 #affichage simple
 plot(cells_to_fill$geometry, lwd=0.1)
-plot(yy, add=T, cex=0.1, col="orange")
+plot(sourcesPietons, add=T, cex=0.1, col="orange")
 dev.off()
 
 #---------------------------------
@@ -162,7 +187,21 @@ dev.off()
 #   (chez moi ça fonctionne ^^)
 #----------------------------------------
 sourcesPietons <-  st_sample(cells_to_fill$geometry, size=cells_to_fill$nb_pietons, type="regular")
+sourcesPietons <-  st_sf(sourcesPietons)
 st_write(sourcesPietons, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/ExportsCalcDensite/sourcesPietonsPaul.shp",layer = "sourcespietons")
+
+
+
+##
+#Troisieme façon
+#Left join : TODO 
+##
+
+
+
+
+
+
 library(raster)
 #intersection entre sources et rasters de densit?s
 dens_boutiques <-  extract(boutiques_dens, sourcesPietons %>% as_Spatial())
@@ -173,12 +212,39 @@ sourcesPietons$dens_boutiques <-  dens_boutiques
 sourcesPietons$dens_traway <-  dens_tramway
 sourcesPietons$dens_restaurants <-  dens_restaurants
 
-##
-#Troisieme façon
-#Left join
-##
 
-sourcespietons_alt <- ZonesMarchables %>% filter(nb_pietons > 0) %>% st_centroid() #Filtrage des points avec une valeur = 0
+
+
+# ######################################################
+# Snapping des  points qui ne sont pas dans les géométries
+##########################################################
+
+
+# on filtre les cellules sans piétons 
+ZonesMarchablesNonVides <- ZonesMarchables %>% filter(nb_pietons > 0)
+plot(ZonesMarchablesNonVides$geometry)
+# On commence par tester si il existe des points en dehors des géométries des cellules
+
+
+
+# liste les polygones dans lesquels chaque points des sourcesPietons est contenu 
+list_poly_containing_srcPietons <-  st_within(sourcesPietons, ZonesMarchables) 
+
+#pour compter combien de prédicats within sont juste, on prend la taille du résultat : si c'est 0 , le point n'est pas dans un polygone, si c'est 1 ou  plus , le point tombe dans un (ou plusieurs) polygones. ici on a pas de superposition, donc toutes les liste de polygones sont de taille 1 maximum 
+
+liste_predicats <-  lengths(list_poly_containing_srcPietons) == 0
+
+# quels sont les indices des points qui ne sont pas dans un polygone ? 
+idx_pts_outside <- which(lengths(liste_predicats) == 0)
+
+
+if(length(idx_pts_outside)==0){
+  cat("aucun point en dehors de polygones")
+}
+
+
+
+
 
 
 #############################################
