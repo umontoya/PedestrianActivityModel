@@ -76,6 +76,11 @@ mailles_density_vec_sf <- st_transform(mailles_density_vec_sf, 2154)
 
 #cellules dans zone marchable
 ZonesMarchables <- st_intersection(zonepieton, mailles_density_vec_sf)
+ZonesMarchables <-  lapply(1:nrow(ZonesMarchables), function(i) {
+  st_cast(ZonesMarchables[i, ], "POLYGON")
+}) %>%  do.call(rbind, .)
+
+
 names(ZonesMarchables) <-  c("EXPLOD_ID" ,"density",   "geometry")
 
 plot(ZonesMarchables[,"density"])
@@ -112,7 +117,6 @@ ZonesMarchables <-  ZonesMarchables %>%  filter(compacity > compacity_threshold)
 
 
 plot(ZonesMarchables[,"density"])
-plot(ZonesMarchables[,"densityNormalized"])
 
 
 
@@ -197,10 +201,43 @@ st_write(sourcesPietons, "I:/Documentos/5A/Stage Inge/DATA/GeoFabrik PaysLoire/E
 #Left join : TODO 
 ##
 
+##################
+# Agrégation des sources aux centroides des polygones des Zones marchables
+#######################""
 
 
-# si on agrèeges les sources au centroid de la cellule 
-sourcesPietonsCentroides <-  st_centroid(cells_to_fill)
+
+# si on crée les sources au centroide de la cellule 
+sourcesPietonsCentroides <-  st_centroid(ZonesMarchables)
+poly_containing_centroides  <- st_within(sourcesPietonsCentroides, ZonesMarchables) 
+liste_predicats <-  lengths(poly_containing_centroides) == 0
+  
+# quels sont les indices des polygones qui ne contiennent pas le centroide
+idx_pts_outside <- which(liste_predicats)
+
+#affichage pour vérifier l'allure des geometries qui ne contiennent pas les centroides
+plot(ZonesMarchables[idx_pts_outside, ])
+
+
+#on va remplacer les centroides par des points DANS la surface des polygones
+newPoints_inside <- st_point_on_surface(ZonesMarchables[idx_pts_outside, ])
+sourcesPietonsCentroides[idx_pts_outside,] <-  newPoints_inside
+
+# on teste si il existe encore des points en dehors 
+
+poly_containing_centroides  <- st_within(sourcesPietonsCentroides, ZonesMarchables) 
+liste_predicats <-  lengths(poly_containing_centroides) == 0
+# quels sont les indices des polygones qui ne contiennent pas le centroide
+idx_pts_outside <- which(liste_predicats)
+if(length(idx_pts_outside)==0){
+  cat("aucun points en dehors des polygones")
+}else{
+  cat(paste(length(idx_pts_outside), "points en dehors des polygones"))
+}
+
+
+
+
 
 
 library(raster)
