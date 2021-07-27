@@ -240,12 +240,13 @@ if(length(idx_pts_outside)==0){
 
 
 
+
 library(raster)
 #intersection entre sources et rasters de densit?s
 dens_boutiques <-  extract(boutiques_dens, sourcesPietons %>% as_Spatial())
 dens_tramway <-  extract(tramway_dens, sourcesPietons %>% as_Spatial())
 dens_restaurants <- extract(restaurants_dens, sourcesPietons %>% as_Spatial())
-# affectation des attributs
+# affectation des attributs à la couche des sources 
 sourcesPietons$dens_boutiques <-  dens_boutiques
 sourcesPietons$dens_traway <-  dens_tramway
 sourcesPietons$dens_restaurants <-  dens_restaurants
